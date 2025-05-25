@@ -1,6 +1,6 @@
 'use client';
 
-import { ChangeEvent, useEffect, useState } from "react";
+import { ChangeEvent, useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import api from "../services/api";
 import { jwtDecode } from "jwt-decode";
@@ -38,6 +38,18 @@ export default function Dashboard() {
     const router = useRouter();
     const { register, handleSubmit, reset, setValue } = useForm<{ title: string; description: string; status: Task["status"]; attachment?: string }>();
 
+
+    const fetchTasks = useCallback(async (userRole: string) => {
+        try {
+            const endPoint = userRole === 'admin' ? '/tasks/admin' : '/tasks';
+            const res = await api.get(endPoint);
+            setTasks(res.data);
+        } catch {
+            removeToken();
+            router.push("/login");
+        }
+    }, [router]);
+
     useEffect(() => {
         const token = getToken();
         if (!token) return router.push("/login");
@@ -47,18 +59,7 @@ export default function Dashboard() {
         setUserId(decoded.id);
 
         fetchTasks(decoded.role);
-    }, [router]);
-
-    const fetchTasks = async (userRole: string) => {
-        try {
-            const endPoint = userRole === 'admin' ? '/tasks/admin' : '/tasks'
-            const res = await api.get(endPoint);
-            setTasks(res.data);
-        } catch (error) {
-            removeToken();
-            router.push("/login");
-        }
-    };
+    }, [router, fetchTasks]);
 
     const onSubmit = async (data: { title: string; description: string, status: Task["status"]; attachment?: string }) => {
         try {
@@ -83,7 +84,7 @@ export default function Dashboard() {
             reset();
             setModalOpen(false);
             fetchTasks(role || '');
-        } catch (error) {
+        } catch {
             alert("Error submitting task.");
         }
     };
@@ -92,7 +93,7 @@ export default function Dashboard() {
         try {
             await api.delete(`/tasks/${id}`);
             fetchTasks(role || '');
-        } catch (error) {
+        } catch {
             alert("Error deleting task.");
         }
     };

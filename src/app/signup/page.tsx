@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import api from "../services/api";
 import Link from "next/link";
+import axios from "axios";
 
 type FormData = {
     email: string;
@@ -20,8 +21,12 @@ export default function Signup() {
             await api.post("/auth/signup", data);
             alert("Signup successful. Please log in.");
             router.push("/login");
-        } catch (error: any) {
-            alert(error.response?.data?.message || "Signup failed.");
+        } catch (error: unknown) {
+            if (axios.isAxiosError(error)) {
+                alert(error.response?.data?.message || "Signup failed.");
+            } else {
+                alert("Signup failed due to unexpected error.");
+            }
         }
     };
 

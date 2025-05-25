@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import api from "../services/api";
 import { setToken } from "../utils/auth";
 import Link from "next/link";
-
+import axios from 'axios';
 type FormData = {
     email: string;
     password: string;
@@ -19,8 +19,12 @@ export default function Login() {
             const res = await api.post("/auth/login", data);
             setToken(res.data.token);
             router.push("/dashboard");
-        } catch (error: any) {
-            alert(error.response?.data?.message || "Login failed.");
+        } catch (error: unknown) {
+            if (axios.isAxiosError(error)) {
+                alert(error.response?.data?.message || "Signup failed.");
+            } else {
+                alert("Signup failed due to unexpected error.");
+            }
         }
     };
 
@@ -32,7 +36,8 @@ export default function Login() {
                 <input {...register("password")} type="password" placeholder="Password" className="w-full p-2 border mb-4 rounded text-gray-700" required />
                 <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded w-full">Login</button>
                 <p className="text-center text-sm mt-2 text-gray-700">
-                    Don't have an account?{" "}
+                    <p>Don&apos;t have an account?</p>
+                    {" "}
                     <Link href="/signup" className="text-blue-600 hover:underline">
                         Register here
                     </Link>
